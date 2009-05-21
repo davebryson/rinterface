@@ -1,0 +1,24 @@
+h2. rinterface: Ruby to Erlang client
+
+rinterface is a pure Ruby client that can send RPC calls to an Erlang node. It's very much a work in progress.
+
+
+h3. Requirements
+
+- Erlang 12B-5
+- Ruby
+- Ruby gems
+- Eventmachine
+
+h3. Try it out
+
+1. Open a terminal, Cd into the test directory and run:
+   'make'
+   'make run'
+   this will start the erlang node named 'math'
+
+2. Open another terminal, and run: 'ruby sample.rb'
+
+h3. How to use?
+
+See 'sample.rb' for an example
