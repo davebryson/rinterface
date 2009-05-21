@@ -52,3 +52,79 @@ end
 </code>
 </pre>
 
+
+h3. So you wanna call Erlang from your Rails app...
+
+Here's a quick and simple example. Make sure you put the rinterface lib into RAILS_ROOT/lib and start the math_server in 'test'
+
+First we'll wrap rinterface in a class to call from Rails:
+
+models/math_service.rb
+
+<pre>
+<code>
+require 'lib/rinterface'
+
+class MathService
+  include Erlang
+  attr_accessor :result
+
+  def self.sum(args)
+    s = self.new
+    s.call_erlang(args)
+    s.result
+  end
+  
+  def initialize
+    @result = 0
+  end
+  
+  def call_erlang(args)
+    EM.run do
+      # Connect to epmd to get the port of 'math'. 
+      # 'math' is the -sname of the erlang node
+      epmd = EpmdConnection.lookup_node("math")
+      epmd.callback do |port|
+     
+        # make the rpc call to 'math' on port for mod 'math_server' on 
+        # fun 'add' with args
+        node = Node.rpc_call("math",port.to_i,"math_server","add",args)
+        node.callback{ |result|
+          @result = result
+          EM.stop
+        }
+    
+        node.errback{ |err|
+          EM.stop
+        }
+      end
+  
+      epmd.errback do |err|
+        EM.stop
+      end
+    end
+  end
+  
+end
+</code>
+</pre>
+
+Now here's the controller:
+
+controllers/math_controller.rb
+
+<pre>
+<code>
+class MathController < ApplicationController
+  def index
+    a = params[:a]
+    b = params[:b]
+    @result = MathService.sum([a.to_i,b.to_i])
+  end
+end
+</code>
+</pre>
+
+Finally, add a template for the view, and try 'http://localhost:3000/math?a=2&b=3'.
+
+This is not ideal yet and not something I'd use yet in production, but it's a starting point for experimenting.
