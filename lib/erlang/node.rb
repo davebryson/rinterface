@@ -5,7 +5,68 @@
 # - makes the RPC call
 #
 module Erlang
-  class Node < EM::Connection
+  class Node
+    attr_reader :result
+    
+    def initialize
+      @result = nil
+    end
+    
+    def self.rpc(node,mod,fun,args)
+      n = self.new
+      setup = proc{ n.do_connect(node,mod,fun,args) }
+      
+      if EM.reactor_running?
+        setup.call
+      else
+        EM.run(&setup)
+      end
+      n.result
+    end
+    
+    def do_connect(node,mod,fun,args)
+      epmd = EpmdConnection.lookup_node(node)
+      epmd.callback do |port|
+        conn = NodeConnection.rpc_call(node,port,mod,fun,args) do |c|
+          c.destnode = node
+          c.mod = mod
+          c.fun = fun
+          c.args = args
+          c.port = port
+          c.myname = build_nodename
+          c.cookie = get_cookie
+        end
+        conn.callback do |r|
+          # Check for bad rpc response
+          # this is where I miss the patten matching in Erlang
+          if r.is_a?(Array)
+            if !r.empty? && r[0] == :badrpc
+              @result = [:badrpc,r[1]]
+            else
+              @result = [:ok,r]
+            end
+          else
+            @result = [:ok,r]
+          end
+          EM.stop
+        end
+        conn.errback do |err|
+          # never called??
+          @result = [:badrpc,err]
+          EM.stop
+        end
+      end
+      epmd.errback do |err|
+        # return bad RPC no port found (0)
+        @result = [:badrpc,"no port found for service"]
+        EM.stop
+      end
+    end
+    
+  end
+  
+  
+  class NodeConnection < EM::Connection
     include EM::Deferrable
     
     attr_accessor :host,:myname,:destnode,:port,:cookie,:mod,:fun,:args
@@ -26,6 +87,7 @@ module Erlang
         c.cookie = get_cookie
       end
     end
+    
     
     # Get the Cookie from the home directory
     def self.get_cookie
@@ -67,11 +129,13 @@ module Erlang
         decoder.read_any 
         # read the message
         result = decoder.read_any
-        puts "Raw Response: #{result.inspect}"
+        #puts "Raw Response: #{result.inspect}"
+        set_deferred_success result[1]
       else
+        # This seems to never happen...always 'p'
         result = decoder.read_any
+        set_deferred_failure result
       end
-      set_deferred_success result[1]
     end
     
     def send_name
@@ -140,6 +204,7 @@ module Erlang
       encoder.out.string
     end
     
+    # Handshake complete...send the RPC
     def receive_challenge_ack(packet_size,decoder)
       @responder = :handle_any_response
       call_remote

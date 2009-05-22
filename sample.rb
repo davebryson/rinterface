@@ -1,31 +1,19 @@
 require 'lib/rinterface'
 
 
-# Example of connecting to an Erlang node and making an RPC call
-include Erlang
+# Try different responses...
 
-EM.run do
-  # Connect to epmd to get the port of 'math'. 'math' is the -sname of the erlang node
-  epmd = EpmdConnection.lookup_node("math")
-  epmd.callback do |port|
-    puts "got the port #{port}"
-    
-    # make the rpc call to 'math' on port for mod 'math_server' on fun 'add' with args
-    node = Node.rpc_call("math",port.to_i,"math_server","add",[10,20])
-    node.callback{ |result|
-      puts "Sum is: #{result}"
-      EM.stop
-    }
-    
-    node.errback{ |err|
-      puts "Error: #{err}"
-      EM.stop
-    }
-  end
-  
-  epmd.errback do |err|
-    puts "Error: #{err}"
-    EM.stop
-  end
-end
+# Bad rpc. Try to call the wrong service
+r = Erlang::Node.rpc("math","matx_server","add",[10,20])
+puts "Got: #{r.inspect}"
+
+puts "--------"
+# No Port for Service. Can't find a port for 'ath'
+r = Erlang::Node.rpc("ath","matx_server","add",[10,20])
+puts "Got: #{r.inspect}"
+
+puts "--------"
+# Good call
+r = Erlang::Node.rpc("math","math_server","add",[10,20])
+puts "Got: #{r.inspect}"
 
