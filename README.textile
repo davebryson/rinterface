@@ -22,11 +22,11 @@ This will start the erlang node named 'math'
 h3. How to use?
 
 In your Ruby code, make a call to the Erlang node like this:
+
+ Erlang::Node(nodename,module,function,args) => [:ok,Response] | [:badprc,Reason]
 <pre>
 <code>
- # Erlang::Node(nodename,module,function,args) => [:ok,Response] | [:badprc,Reason]
-
- r = Erlang::Node.rpc("math","math_server","add",[10,20])
+  r = Erlang::Node.rpc("math","math_server","add",[10,20])
 
  if r[0] == :badrpc
    puts "Got and Error. Reason #{r[1]}"
