@@ -62,9 +62,10 @@ Here's a quick and simple example. Make sure you put the rinterface lib into RAI
 In the controller:
 
 controllers/math_controller.rb
+
 <pre>
 <code>
-require 'lib/rinterface'
+require "lib/rinterface"
 
 class MathController < ApplicationController
   def index
