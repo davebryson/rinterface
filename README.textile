@@ -23,7 +23,8 @@ h3. How to use?
 
 In your Ruby code, make a call to the Erlang node like this:
 
- Erlang::Node(nodename,module,function,args) => [:ok,Response] | [:badprc,Reason]
+Erlang::Node(nodename,module,function,args) => [:ok,Response] | [:badprc,Reason]
+
 <pre>
 <code>
   r = Erlang::Node.rpc("math","math_server","add",[10,20])
