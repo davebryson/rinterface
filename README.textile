@@ -37,6 +37,7 @@ In your Ruby code, make a call to the Erlang node like this:
 </pre>
 
 Where:
+
  * 'math' is the node name (the -sname of the Erlang node)
  * 'math_server' is the name of the module
  * 'add' is the funtion to call
