@@ -92,7 +92,7 @@ module Erlang
     # Get the Cookie from the home directory
     def self.get_cookie
       # ... I did it all for the cookie, come on the cookie ...
-      fp = File.expand_path("~#{ENV['USER']}/.erlang.cookie")
+      fp = File.expand_path("#{ENV['HOME']}/.erlang.cookie")
       fh = File.open(fp,'r')
       fh.readline.strip
     end
